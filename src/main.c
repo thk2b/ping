@@ -4,7 +4,7 @@
 #include <sys/socket.h>
 
 int raw_socket__new(void) {
-    return socket(PF_INET, SOCK_RAW, 0);
+    return socket(PF_INET, SOCK_RAW, AF_INET);
 }
 
 int main() {
