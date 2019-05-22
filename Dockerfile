@@ -1,7 +1,6 @@
 FROM debian
 
 RUN apt-get update
-RUN apt-get install build-essential
+RUN apt-get install build-essential -y
 
-RUN make
-ENTRYPOINT [ "/bin/sh" ]
+ENTRYPOINT [ "/bin/bash" ]
