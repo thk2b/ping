@@ -15,7 +15,7 @@
 
 typedef struct {
     struct icmp hdr;
-    char data[56];
+    char data[44];
 } echo_request_t;
 
 typedef struct {

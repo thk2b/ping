@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include <icmp_socket.h>
 #include <echo.h>
@@ -27,12 +28,15 @@ static int usage(int ret, char *prog) {
 }
 
 static int resolve_host(char *s, struct sockaddr_in *dst) {
-    dst->sin_family = AF_INET;
-    dst->sin_port = 0;
-    int status = inet_pton(AF_INET, s, &dst->sin_addr.s_addr);
-    if (status <= 0) {
+    struct addrinfo hints = {0};
+    struct addrinfo *info = NULL;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_CANONNAME;
+    if (getaddrinfo(s, NULL, &hints, &info)) {
         return 1;
     }
+    *dst = *(struct sockaddr_in*)info->ai_addr;
     return 0;
 }
 
@@ -45,6 +49,7 @@ int main(int ac, char **av) {
     if (sock == -1) {
         return error("icmp_socket__new");
     }
+    // struct sockaddr_in dst = {0};
     struct sockaddr_in dst = {0};
     if (resolve_host(av[1], &dst)) {
         return error("resolve_host");
@@ -58,7 +63,7 @@ int main(int ac, char **av) {
     }
     while (1) {
         char res_buf[BUFSIZE] = {0};
-        if (icmp_socket__recv(sock, res_buf, ECHO_RES_SIZE)) {
+        if (icmp_socket__recv(sock, &dst, res_buf, ECHO_RES_SIZE)) {
             return error("icmp_socket__recv");
         }
         if (echo__process_response(res_buf, ECHO_RES_SIZE)) {

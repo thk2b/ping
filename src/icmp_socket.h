@@ -10,13 +10,14 @@ icmpsock_t icmp_socket__new(void);
 
 int icmp_socket__send(
     icmpsock_t s,
-    struct sockaddr_in *dst,
+    struct sockaddr_in *to,
     void *payload,
     size_t size
 );
 
 int icmp_socket__recv(
     icmpsock_t s,
+    struct sockaddr_in *from,
     void *buf,
     size_t size
 );

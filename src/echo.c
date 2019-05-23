@@ -47,14 +47,12 @@ int echo__new_request(char *buf, size_t bufsize) {
             .icmp_type = ICMP_ECHO,
             .icmp_code = 0,
             .icmp_cksum = 0,
-            .icmp_id = getpid(),
+            .icmp_seq = htons(1),
+            .icmp_id = htons(getpid()),
         }
     };
     memcpy(req->data, "hello, world\n", 14);
     req->hdr.icmp_cksum = cksum((void*)req, ECHO_REQ_SIZE);
-    print_icmp_header(&req->hdr);
-    write(1, buf, bufsize);
-    printf("\n");
     return 0;
 }
 
@@ -65,6 +63,7 @@ int echo__process_response(char *buf, size_t bufsize) {
     echo_response_t *res = (echo_response_t*) buf;
     if (verify_chksum(res->icmp.hdr.icmp_cksum, buf, bufsize)) {
         printf("invalid cksum\n");
+        return 1;
     }
     print_icmp_header(&res->icmp.hdr);
     write(1, buf + sizeof(struct ip), bufsize - sizeof(struct ip));
