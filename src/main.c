@@ -3,92 +3,57 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
-#include <limits.h>
-
 #include <arpa/inet.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <icmp_socket.h>
+#include <echo.h>
 
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
+#define BUFSIZE 1024
 
-int raw_socket__new(void) {
-    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    int ttl = 64;
-    if (setsockopt(sock, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl))) {
-        return -1;
-    }
-    return sock;
+static int error(char *msg) {
+    dprintf(2,
+        "ping: error: %s: %s", msg ? msg : "",
+        strerror(errno)
+    );
+    return 1;
 }
 
-u_short cksum(void *vbuf, size_t bufsize) {
-    uint16_t *data = (uint16_t*)vbuf;
-    uint32_t sum = 0;
-    size_t limit = bufsize / 2;
-    char *buf = (char*)vbuf;
-    for (size_t i = 0; i < limit; i++) {
-        sum += ntohs(data[i]);
-        if (sum > UINT16_MAX) {
-            sum -= UINT16_MAX;
-        }
-    }
-    if (bufsize & 1) {
-        sum += ntohs((uint8_t)(buf[bufsize-1]));
-        if (sum > UINT16_MAX) {
-            sum -= UINT16_MAX;
-        }
-    }
-    return htons(~sum);
+static int usage(int ret, char *prog) {
+    printf("usage: %s: host\n", prog);
+    return ret;
 }
 
-#define ECHO_REQ_SIZE (sizeof (struct icmp))
-int echo_request(char *buf, size_t bufsize) {
-    if (bufsize < ECHO_REQ_SIZE) {
+static int resolve_host(char *s, struct sockaddr_in *dst) {
+    int status = inet_pton(AF_INET, s, &dst->sin_addr.s_addr) == 0;
+    if (status == 0) {
         return 1;
     }
-    bzero(buf, ECHO_REQ_SIZE);
-    struct icmp *icmp_hdr = (struct icmp*) buf;
-    *icmp_hdr = (struct icmp) {
-        .icmp_type = ICMP_ECHO,
-        .icmp_code = 0,
-        .icmp_cksum = 0,
-        .icmp_id = getpid(),
-        // .icmp_data = 1
-    };
-    icmp_hdr->icmp_cksum = cksum((void*)icmp_hdr, sizeof(struct icmp));
     return 0;
 }
 
-int main() {
-    char out_buf[400] = {0}, in_buf[400] = {0};
-    int sock = raw_socket__new();
-    if (sock == -1) {
-        perror(strerror(errno));
+int main(int ac, char **av) {
+    if (ac == 1) {
+        return usage(1, av[0]);
     }
-    
-    struct sockaddr_in dst = {0};
-    struct sockaddr_in src = {0};
-    dst.sin_family = AF_INET;
-    dst.sin_port = htons(0);
-    dst.sin_addr.s_addr = inet_addr("0.0.0.0");
-
-    if (echo_request(out_buf, 400)) {
-        perror("error initializing echo request\n");
+    icmpsock_t sock = icmp_socket__new();
+    if (sock == 1) {
+        return error("icmp_socket__new");
     }
-    socklen_t addrlen = sizeof(dst);
-    out_buf[ECHO_REQ_SIZE] = 'A';
-
-    if (sendto(sock, out_buf, ECHO_REQ_SIZE + 1, 0, (struct sockaddr*)&dst, addrlen) < 0) {
-        perror(strerror(errno));
+    char req_buf[BUFSIZE];
+    int req = echo__new_request(req_buf, BUFSIZE);
+    if (req == 1) {
+        return error("echo_request__new");
     }
-    if (recvfrom(sock, in_buf, ECHO_REQ_SIZE + 1, 0, (struct sockaddr*)&src, &addrlen) < 0) {
-        perror(strerror(errno));
-    } else {
-        struct icmp *res = (struct icmp*)in_buf;
-        printf("%u, %c\n", res->icmp_code, in_buf[ECHO_REQ_SIZE]);
-        write(1, in_buf, ECHO_REQ_SIZE + 1);
+    struct sockaddr_in dst;
+    if (resolve_host(av[1], &dst)) {
+        return error("resolve_host");
     }
+    if (icmp_socket__send(sock, &dst, req_buf, ECHO_REQ_SIZE)) {
+        return error("icmp_socket__send");
+    }
+    char res_buf[BUFSIZE];
+    if (icmp_socket__recv(sock, res_buf, BUFSIZE)) {
+        return error("icmp_socket__recv");
+    }
+    echo__process_response(res_buf, ECHO_RES_SIZE);
 }
