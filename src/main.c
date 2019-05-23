@@ -11,10 +11,13 @@
 #define BUFSIZE 1024
 
 static int error(char *msg) {
-    dprintf(2,
-        "ping: error: %s: %s\n", msg ? msg : "",
-        strerror(errno)
-    );
+    char *e;
+    if (errno) {
+        e = strerror(errno);
+    } else {
+        e = "Unknown error";
+    }
+    dprintf(2, "ping: error: %s: %s\n", msg ? msg : "", e);
     return 1;
 }
 

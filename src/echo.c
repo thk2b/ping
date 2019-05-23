@@ -47,7 +47,7 @@ int echo__new_request(char *buf, size_t bufsize) {
             .icmp_type = ICMP_ECHO,
             .icmp_code = 0,
             .icmp_cksum = 0,
-            .icmp_id = 0,
+            .icmp_id = getpid(),
         }
     };
     memcpy(req->data, "hello, world\n", 14);
