@@ -1,6 +1,6 @@
 NAME = my_ping
 
-SRC = $(addprefix src/, main.c echo.c icmp_socket.c error.c)
+SRC = $(addprefix src/, main.c echo.c icmp_socket.c)
 
 CC = gcc
 
