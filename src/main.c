@@ -25,15 +25,16 @@ static int usage(int ret, char *prog) {
 
 static int resolve_host(char *s, struct sockaddr_in *dst) {
     dst->sin_family = AF_INET;
-    dst->sin_port = htons(0);
+    dst->sin_port = 0;
     int status = inet_pton(AF_INET, s, &dst->sin_addr.s_addr);
-    if (status == 0) {
+    if (status <= 0) {
         return 1;
     }
     return 0;
 }
 
 int main(int ac, char **av) {
+    errno = 0;
     if (ac == 1) {
         return usage(1, av[0]);
     }
@@ -46,8 +47,7 @@ int main(int ac, char **av) {
         return error("resolve_host");
     }
     char req_buf[BUFSIZE] = {0};
-    int req = echo__new_request(req_buf, BUFSIZE);
-    if (req == 1) {
+    if (echo__new_request(req_buf, BUFSIZE)) {
         return error("echo_request__new");
     }
     if (icmp_socket__send(sock, &dst, req_buf, ECHO_REQ_SIZE)) {
@@ -58,6 +58,8 @@ int main(int ac, char **av) {
         if (icmp_socket__recv(sock, res_buf, ECHO_RES_SIZE)) {
             return error("icmp_socket__recv");
         }
-        echo__process_response(res_buf, ECHO_RES_SIZE);
+        if (echo__process_response(res_buf, ECHO_RES_SIZE)) {
+            return error("echo__process_response");
+        }
     }
 }

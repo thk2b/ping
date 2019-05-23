@@ -4,7 +4,7 @@ SRC = $(addprefix src/, main.c echo.c icmp_socket.c)
 
 CC = gcc
 
-DEBUG = -fsanitize=address -fsanitize=undefined
+DEBUG = -fsanitize=address -fsanitize=undefined -g
 INCLUDES = $(addprefix -I, ./src)
 CFLAGS += -Wall -Wextra -Werror $(DEBUG) $(INCLUDES)
 

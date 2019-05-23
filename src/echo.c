@@ -24,6 +24,10 @@ static u_short cksum(void *vbuf, size_t bufsize) {
     return htons(~sum);
 }
 
+static int verify_chksum(u_short candidate, void *vbuf, size_t bufsize) {
+    return candidate == cksum(vbuf, bufsize);
+}
+
 static void print_icmp_header(struct icmp *msg) {
     printf("type: %u, code: %u, cksum: %u\n",
         msg->icmp_type,
@@ -41,13 +45,13 @@ int echo__new_request(char *buf, size_t bufsize) {
     *req = (echo_request_t) {
         .hdr = {
             .icmp_type = ICMP_ECHO,
-            .icmp_code = htons(0),
+            .icmp_code = 0,
             .icmp_cksum = 0,
             .icmp_id = 0,
         }
     };
-    req->hdr.icmp_cksum = cksum((void*)&req->hdr, sizeof(req->hdr));
     memcpy(req->data, "hello, world\n", 14);
+    req->hdr.icmp_cksum = cksum((void*)req, ECHO_REQ_SIZE);
     print_icmp_header(&req->hdr);
     write(1, buf, bufsize);
     printf("\n");
@@ -59,8 +63,11 @@ int echo__process_response(char *buf, size_t bufsize) {
         return 1;
     }
     echo_response_t *res = (echo_response_t*) buf;
+    if (verify_chksum(res->icmp.hdr.icmp_cksum, buf, bufsize)) {
+        printf("invalid cksum\n");
+    }
     print_icmp_header(&res->icmp.hdr);
     write(1, buf + sizeof(struct ip), bufsize - sizeof(struct ip));
     printf("\n");
-    return 1;
+    return 0;
 }
