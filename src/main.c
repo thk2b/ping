@@ -3,12 +3,11 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 
 #include <icmp_socket.h>
 #include <echo.h>
 #include <ping.h>
+#include <host.h>
 
 static int error(char *msg) {
     char *e;
@@ -26,20 +25,6 @@ static int usage(int ret, char *prog) {
     return ret;
 }
 
-static int resolve_host(char *s, struct sockaddr_in *dst) {
-    struct addrinfo hints = {0};
-    struct addrinfo *info = NULL;
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_CANONNAME;
-    if (getaddrinfo(s, NULL, &hints, &info)) {
-        return 1;
-    }
-    *dst = *(struct sockaddr_in*)info->ai_addr;
-    freeaddrinfo(info);
-    return 0;
-}
-
 int main(int ac, char **av) {
     errno = 0;
     if (ac == 1) {
@@ -50,8 +35,9 @@ int main(int ac, char **av) {
         return error("icmp_socket__new");
     }
     struct sockaddr_in target = {0};
-    if (resolve_host(av[1], &target)) {
-        return error("resolve_host");
+    host_t host = {0};
+    if (host__new(av[1], &target, &host)) {
+        return error("host__new");
     }
-    return ping(sock, &target);
+    return ping(sock, &target, &host);
 }
