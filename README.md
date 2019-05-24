@@ -2,9 +2,10 @@
 An implementation of the ping command
 
 ## Quick start
-
 ```sh
+
 make
+
 ./ping google.com
 64 bytes from sfo07s16-in-f78.1e100.net (216.58.195.78): icmp_seq=1 ttl=61 time=4.859 ms
 64 bytes from sfo07s16-in-f78.1e100.net (216.58.195.78): icmp_seq=2 ttl=61 time=4.991 ms
@@ -14,6 +15,17 @@ make
 --- google.com ping statistics ---
 4 packets transmitted, 4 packets received, 0.0% packet loss
 rtt min/avg/max/mdev = 4.843/4.892/4.991/??? ms
+```
+
+You must be root to run the command. A dockerfile is provided to run inside a Debian VM:
+
+```sh
+docker-machine create --driver virtualbox ping
+docker-machine start ping
+eval $(docker-machine env ping)
+docker build -t local/ping .
+docker run -itv `pwd`:/ping local/ping
+make
 ```
 
 ## Usage
