@@ -30,24 +30,32 @@ int icmp_socket__send(
     return 0;
 }
 
-int icmp_socket__recv(
+ssize_t icmp_socket__recv(
     icmpsock_t s,
-    struct sockaddr_in *from,
-    void *buf,
-    size_t size
+    struct msghdr *hdr
 ) {
-    struct iovec vec = {
+    ssize_t recieved = recvmsg(s, hdr, 0);
+    if (recieved < 0) {
+        return -1;
+    }
+    return recieved;
+}
+
+struct msghdr *msg_reciever__new(
+    char **dst,
+    struct sockaddr_in *from
+) {
+    static char buf[MSGBUFSIZE] = {0};
+    static struct iovec vec = {
         .iov_base = buf,
-        .iov_len = size
+        .iov_len = MSGBUFSIZE
     };
-    struct msghdr hdr = {0};
+    static struct msghdr hdr = {
+        .msg_iov = &vec,
+        .msg_iovlen = 1
+    };
     hdr.msg_name = (struct sockaddr*)from;
     hdr.msg_namelen = sizeof(struct sockaddr_in);
-    hdr.msg_iov = &vec;
-    hdr.msg_iovlen = 1;
-    ssize_t recieved = recvmsg(s, &hdr, 0);
-    if (recieved < 0) {
-        return 1;
-    }
-    return 0;
+    *dst = buf;
+    return &hdr;
 }

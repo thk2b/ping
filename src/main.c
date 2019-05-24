@@ -49,7 +49,6 @@ int main(int ac, char **av) {
     if (sock == -1) {
         return error("icmp_socket__new");
     }
-    // struct sockaddr_in dst = {0};
     struct sockaddr_in dst = {0};
     if (resolve_host(av[1], &dst)) {
         return error("resolve_host");
@@ -61,9 +60,10 @@ int main(int ac, char **av) {
     if (icmp_socket__send(sock, &dst, req_buf, ECHO_REQ_SIZE)) {
         return error("icmp_socket__send");
     }
+    char *res_buf;
+    struct msghdr *reciever = msg_reciever__new(&res_buf, &dst);
     while (1) {
-        char res_buf[BUFSIZE] = {0};
-        if (icmp_socket__recv(sock, &dst, res_buf, ECHO_RES_SIZE)) {
+        if (icmp_socket__recv(sock, reciever) < (long)ECHO_RES_SIZE) {
             return error("icmp_socket__recv");
         }
         if (echo__process_response(res_buf, ECHO_RES_SIZE)) {

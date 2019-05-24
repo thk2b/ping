@@ -15,11 +15,15 @@ int icmp_socket__send(
     size_t size
 );
 
-int icmp_socket__recv(
+ssize_t icmp_socket__recv(
     icmpsock_t s,
-    struct sockaddr_in *from,
-    void *buf,
-    size_t size
+    struct msghdr *hdr
+);
+
+#define MSGBUFSIZE 1024
+struct msghdr *msg_reciever__new(
+    char **dst,
+    struct sockaddr_in *from
 );
 
 #endif
