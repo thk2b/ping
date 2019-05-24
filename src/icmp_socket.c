@@ -1,9 +1,8 @@
 #include <icmp_socket.h>
+
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netdb.h>
-
-#include <assert.h>
 
 icmpsock_t icmp_socket__new(void) {
     icmpsock_t sock = (icmpsock_t)socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);

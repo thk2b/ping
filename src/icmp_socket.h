@@ -12,7 +12,7 @@ typedef int icmpsock_t;
 icmpsock_t icmp_socket__new(void);
 
 /*
-** sends the payload of size to the destination
+** send the payload of size to the destination
 */
 int icmp_socket__send(
     icmpsock_t s,

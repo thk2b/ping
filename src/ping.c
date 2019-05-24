@@ -71,8 +71,8 @@ int ping(
     struct sockaddr_in *target,
     host_t *host
 ) {
-    char req_buf[ECHO_REQ_SIZE] = {0};
-    char *res_buf;
+    char req_buf[ECHO_REQ_SIZE] = {0}; /* request buffer where outgoing messages are written */
+    char *res_buf;                     /* response buffer where incoming messages are written */
     struct msghdr *reciever = msg_reciever__new(&res_buf, target);
 
     ping_g.host = host;
