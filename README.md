@@ -1,5 +1,5 @@
 # Ping
-An implementation of the ping command
+A minimal implementation of the ping command
 
 ## Quick start
 ```sh
