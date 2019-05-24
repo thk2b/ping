@@ -29,9 +29,9 @@ static void recompute_checksum(echo_request_t *req) {
     req->hdr.icmp_cksum = cksum(req, ECHO_REQ_SIZE);
 }
 
-// static int verify_chksum(u_short candidate, void *vbuf, size_t bufsize) {
-//     return candidate == cksum(vbuf, bufsize);
-// }
+static int verify_chksum(u_short candidate, void *vbuf, size_t bufsize) {
+    return candidate == cksum(vbuf, bufsize);
+}
 
 int echo__req_new(char *buf, size_t bufsize) {
     if (bufsize < ECHO_REQ_SIZE) {
@@ -64,6 +64,12 @@ int echo__req_set_payload(char *buf) {
     }
     recompute_checksum(req);
     return 0;
+}
+
+int echo__res_validate(char *buf) {
+    echo_response_t *res = (echo_response_t*) buf;
+    return verify_chksum(res->icmp.hdr.icmp_cksum, buf, ECHO_RES_SIZE)
+        && res->icmp.hdr.icmp_id == htons(getpid());
 }
 
 struct timeval *echo__res_get_payload(char *buf) {

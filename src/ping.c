@@ -13,7 +13,7 @@ static float ping__get_time(struct timeval *tv) {
     return (float)(tv->tv_sec * 1000 + tv->tv_usec) / 1000;
 }
 
-static void ping__summary() {
+static int ping__summary() {
     float loss = ((float)ping_g.sent - (float)ping_g.received) / (float)ping_g.sent * 100 ;
     printf("\n--- %s ping statistics ---\n", ping_g.host->cannonname);
     printf("%lu packets transmitted, %lu packets received, %.1f%% packet loss\n",
@@ -22,6 +22,7 @@ static void ping__summary() {
     printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/??? ms\n",
         ping_g.min, ping_g.avg, ping_g.max
     );
+    return ping_g.received > 0;
 }
 
 static int ping__process_response(char *buf, size_t bufsize) {
@@ -47,8 +48,7 @@ static int ping__process_response(char *buf, size_t bufsize) {
 
 void sigint(int s) {
     (void)s;
-    ping__summary();
-    exit(0);
+    exit(ping__summary());
 }
 
 int ping(
@@ -73,9 +73,9 @@ int ping(
         if (icmp_socket__send(sock, target, req_buf, ECHO_REQ_SIZE)) {
             return error("icmp_socket__send");
         }
-        if (icmp_socket__recv(sock, reciever) != (long)ECHO_RES_SIZE) {
-            return error("icmp_socket__recv");
-        }
+        while (icmp_socket__recv(sock, reciever) != (long)ECHO_RES_SIZE
+            && echo__res_validate(res_buf)
+        );
         if (ping__process_response(res_buf, ECHO_RES_SIZE)) {
             return error("ping__process_response");
         }

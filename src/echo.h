@@ -29,6 +29,7 @@ typedef struct {
 int echo__req_new(char *buf, size_t bufsize);
 void echo__req_set_seq(char *buf, int seq);
 int echo__req_set_payload(char *buf);
+int echo__res_validate(char *buf);
 struct timeval *echo__res_get_payload(char *buf);
 u_short echo__res_get_seq(char *buf);
 u_short echo__res_get_ttl(char *buf);

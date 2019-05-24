@@ -8,17 +8,7 @@
 #include <echo.h>
 #include <ping.h>
 #include <host.h>
-
-static int error(char *msg) {
-    char *e;
-    if (errno) {
-        e = strerror(errno);
-    } else {
-        e = "Unknown error";
-    }
-    dprintf(2, "ping: error: %s: %s\n", msg ? msg : "", e);
-    return 1;
-}
+#include <error.h>
 
 static int usage(int ret, char *prog) {
     printf("usage: %s: host\n", prog);
@@ -32,12 +22,12 @@ int main(int ac, char **av) {
     }
     icmpsock_t sock = icmp_socket__new();
     if (sock == -1) {
-        return error("icmp_socket__new");
+        return error("can't create socket\nhint: you need to be root");
     }
     struct sockaddr_in target = {0};
     host_t host = {0};
     if (host__new(av[1], &target, &host)) {
-        return error("host__new");
+        return error("can't resolve host");
     }
     return ping(sock, &target, &host);
 }
