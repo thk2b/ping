@@ -25,6 +25,7 @@ int icmp_socket__send(
 ** create a message header for recvmsg
 ** dst will point to the data buffer where the message will be stored
 ** note that recieving a new message will overwrite the previous
+** because of the use of static memory, there can be only one instance of a reciever at once
 */
 #define MSGBUFSIZE 1024
 struct msghdr *msg_reciever__new(
