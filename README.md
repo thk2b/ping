@@ -28,7 +28,7 @@ The process is repeated untill a SIGINT signal is captured and the program exits
 
 ## Internals
 
-The core of the project is layered into 3 modules with clear and minimally-overlapping roles.
+The core of the project is layered into 3 modules with clear and minimally-overlapping roles. More specific information can be found in the header files.
 
 ### icmp_socket
 
