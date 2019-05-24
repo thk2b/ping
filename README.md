@@ -1,7 +1,7 @@
-# ping
+# Ping
 An implementation of the ping command
 
-# Quick start
+## Quick start
 
 ```sh
 make
@@ -16,30 +16,30 @@ make
 rtt min/avg/max/mdev = 4.843/4.892/4.991/??? ms
 ```
 
-# Usage
+## Usage
 
-usage: ./ping host
+`usage: ./ping host`
 
-# Implementation
+## Implementation
 
 This program uses a raw ICMP socket to sent an ICMP ECHO request to the destination with the sending time as a payload.
 It then waits for the matching ICMP response and calculates the time difference.
 The process is repeated untill a SIGINT signal is captured and the program exits after displaying statistics.
 
-# Internals
+## Internals
 
 The core of the project is layered into 3 modules with clear and minimally-overlapping roles.
 
-- icmp_socket
+### icmp_socket
 
 Responsible for initializing the socket, and sending/receiving data.
 Doesn't care what is being sent or recieved.
 
-- echo
+### echo
 
-Manages the ICMP ECHO request, including the header and payload.
-Doesn't care how the request is sent or received or what happens to the payload.
+Manages the ICMP ECHO packet and filtering of incoming packets.
+Doesn't care how the request is sent or received nor what happens to the payload.
 
-- ping
+### ping
 
-Manages the program and request/response lifecyle, manages the data and user interface.
+Manages the main loop, request/response lifecyle, statistics and user interface.
