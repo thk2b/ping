@@ -36,10 +36,7 @@ int icmp_socket__send(
     return 0;
 }
 
-ssize_t icmp_socket__recv(
-    icmpsock_t s,
-    struct msghdr *hdr
-) {
+ssize_t icmp_socket__recv(icmpsock_t s, struct msghdr *hdr) {
     ssize_t recieved = recvmsg(s, hdr, 0);
     if (recieved < 0) {
         return -1;
@@ -47,10 +44,7 @@ ssize_t icmp_socket__recv(
     return recieved;
 }
 
-struct msghdr *msg_reciever__new(
-    char **dst,
-    struct sockaddr_in *from
-) {
+struct msghdr *msg_reciever__new(char **dst, struct sockaddr_in *from) {
     static char buf[MSGBUFSIZE] = {0};
     static struct iovec vec = {
         .iov_base = buf,
