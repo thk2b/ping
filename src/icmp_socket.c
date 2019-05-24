@@ -15,7 +15,7 @@ icmpsock_t icmp_socket__new(void) {
         return -1;
     }
     struct timeval timeo = {
-        .tv_sec = 5, .tv_usec = 0,
+        .tv_sec = 20, .tv_usec = 0,
     };
     if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeo, sizeof(struct timeval))
     || setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(struct timeval))) {

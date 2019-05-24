@@ -11,7 +11,7 @@
 #include <error.h>
 
 static int usage(int ret, char *prog) {
-    printf("usage: %s: host\n", prog);
+    printf("usage: %s host\n", prog);
     return ret;
 }
 

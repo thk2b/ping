@@ -6,8 +6,14 @@
 
 typedef int icmpsock_t;
 
+/*
+** represents a raw IMCP socket
+*/
 icmpsock_t icmp_socket__new(void);
 
+/*
+** sends the payload of size to the destination
+*/
 int icmp_socket__send(
     icmpsock_t s,
     struct sockaddr_in *to,
@@ -15,15 +21,24 @@ int icmp_socket__send(
     size_t size
 );
 
-ssize_t icmp_socket__recv(
-    icmpsock_t s,
-    struct msghdr *hdr
-);
-
+/*
+** create a message header for recvmsg
+** dst will point to the data buffer where the message will be stored
+** note that recieving a new message will overwrite the previous
+*/
 #define MSGBUFSIZE 1024
 struct msghdr *msg_reciever__new(
     char **dst,
     struct sockaddr_in *from
+);
+
+
+/*
+** recieve a message
+*/
+ssize_t icmp_socket__recv(
+    icmpsock_t s,
+    struct msghdr *hdr
 );
 
 #endif

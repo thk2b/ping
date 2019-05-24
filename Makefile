@@ -1,4 +1,4 @@
-NAME = my_ping
+NAME = ping
 
 SRC = $(addprefix src/, main.c echo.c ping.c error.c host.c icmp_socket.c)
 

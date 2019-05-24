@@ -4,6 +4,9 @@
 #include <unistd.h>
 #include <stdio.h>
 
+/*
+** IP checksum as per https://tools.ietf.org/html/rfc1071
+*/
 static u_short cksum(void *vbuf, size_t bufsize) {
     uint16_t *data = (uint16_t*)vbuf;
     uint32_t sum = 0;
@@ -29,6 +32,9 @@ static void recompute_checksum(echo_request_t *req) {
     req->hdr.icmp_cksum = cksum(req, ECHO_REQ_SIZE);
 }
 
+/*
+** return 1 if the checksum matches the buffer
+*/
 static int verify_chksum(u_short candidate, void *vbuf, size_t bufsize) {
     return candidate == cksum(vbuf, bufsize);
 }

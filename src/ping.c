@@ -9,10 +9,16 @@
 
 static _ping_t ping_g = {0};
 
+/*
+** convert a timeval to a float
+*/
 static float ping__get_time(struct timeval *tv) {
     return (float)(tv->tv_sec * 1000 + tv->tv_usec) / 1000;
 }
 
+/*
+** print the sumary: min, avg, max
+*/
 static int ping__summary() {
     float loss = ((float)ping_g.sent - (float)ping_g.received) / (float)ping_g.sent * 100 ;
     printf("\n--- %s ping statistics ---\n", ping_g.host->cannonname);
@@ -25,6 +31,12 @@ static int ping__summary() {
     return ping_g.received > 0;
 }
 
+
+/*
+** process an incoming response
+** calculate the travel time and update the statistics
+** print an informative message
+*/
 static int ping__process_response(char *buf, size_t bufsize) {
     struct timeval *tv_sent_at = echo__res_get_payload(buf);
     struct timeval tv_now;
@@ -46,6 +58,9 @@ static int ping__process_response(char *buf, size_t bufsize) {
     return 0;
 }
 
+/*
+** SIGINT handler
+*/
 void sigint(int s) {
     (void)s;
     exit(ping__summary());
@@ -73,6 +88,7 @@ int ping(
         if (icmp_socket__send(sock, target, req_buf, ECHO_REQ_SIZE)) {
             return error("icmp_socket__send");
         }
+        /* keep recieving untill we find a valid response*/
         while (icmp_socket__recv(sock, reciever) != (long)ECHO_RES_SIZE
             && echo__res_validate(res_buf)
         );
