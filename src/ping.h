@@ -4,11 +4,12 @@
 #include <icmp_socket.h>
 
 typedef struct {
-    struct timeval min;
-    struct timeval max;
-    struct timeval avg;
-    struct timeval mdev;
-    uint64_t count;
+    float min;
+    float max;
+    float avg;
+    float mdev;
+    uint64_t received;
+    uint64_t sent;
 } _ping_t;
 
 int ping(
