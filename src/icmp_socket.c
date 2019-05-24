@@ -24,12 +24,12 @@ int icmp_socket__send(
     size_t size
 ) {
     ssize_t sent = sendto(s, payload, size, 0, (struct sockaddr*)to, sizeof(struct sockaddr_in));
-    if (sent <= 0) {
+    if (sent < 0 || sent != (unsigned)size) {
         return 1;
     }
     return 0;
 }
-
+#include <stdio.h>
 ssize_t icmp_socket__recv(
     icmpsock_t s,
     struct msghdr *hdr

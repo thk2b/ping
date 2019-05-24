@@ -8,8 +8,7 @@
 
 #include <icmp_socket.h>
 #include <echo.h>
-
-#define BUFSIZE 1024
+#include <ping.h>
 
 static int error(char *msg) {
     char *e;
@@ -37,6 +36,7 @@ static int resolve_host(char *s, struct sockaddr_in *dst) {
         return 1;
     }
     *dst = *(struct sockaddr_in*)info->ai_addr;
+    freeaddrinfo(info);
     return 0;
 }
 
@@ -49,25 +49,9 @@ int main(int ac, char **av) {
     if (sock == -1) {
         return error("icmp_socket__new");
     }
-    struct sockaddr_in dst = {0};
-    if (resolve_host(av[1], &dst)) {
+    struct sockaddr_in target = {0};
+    if (resolve_host(av[1], &target)) {
         return error("resolve_host");
     }
-    char req_buf[BUFSIZE] = {0};
-    if (echo__new_request(req_buf, BUFSIZE)) {
-        return error("echo_request__new");
-    }
-    if (icmp_socket__send(sock, &dst, req_buf, ECHO_REQ_SIZE)) {
-        return error("icmp_socket__send");
-    }
-    char *res_buf;
-    struct msghdr *reciever = msg_reciever__new(&res_buf, &dst);
-    while (1) {
-        if (icmp_socket__recv(sock, reciever) < (long)ECHO_RES_SIZE) {
-            return error("icmp_socket__recv");
-        }
-        if (echo__process_response(res_buf, ECHO_RES_SIZE)) {
-            return error("echo__process_response");
-        }
-    }
+    return ping(sock, &target);
 }

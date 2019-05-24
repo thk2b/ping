@@ -24,19 +24,16 @@ static u_short cksum(void *vbuf, size_t bufsize) {
     return htons(~sum);
 }
 
-static int verify_chksum(u_short candidate, void *vbuf, size_t bufsize) {
-    return candidate == cksum(vbuf, bufsize);
+static void recompute_checksum(echo_request_t *req) {
+    req->hdr.icmp_cksum = 0;
+    req->hdr.icmp_cksum = cksum(req, ECHO_REQ_SIZE);
 }
 
-static void print_icmp_header(struct icmp *msg) {
-    printf("type: %u, code: %u, cksum: %u\n",
-        msg->icmp_type,
-        msg->icmp_code,
-        msg->icmp_cksum
-    );
-}
+// static int verify_chksum(u_short candidate, void *vbuf, size_t bufsize) {
+//     return candidate == cksum(vbuf, bufsize);
+// }
 
-int echo__new_request(char *buf, size_t bufsize) {
+int echo__req_new(char *buf, size_t bufsize) {
     if (bufsize < ECHO_REQ_SIZE) {
         return 1;
     }
@@ -47,26 +44,39 @@ int echo__new_request(char *buf, size_t bufsize) {
             .icmp_type = ICMP_ECHO,
             .icmp_code = 0,
             .icmp_cksum = 0,
-            .icmp_seq = htons(1),
+            .icmp_seq = 0,
             .icmp_id = htons(getpid()),
-        }
+        },
+        .data = {0}
     };
-    memcpy(req->data, "hello, world\n", 14);
-    req->hdr.icmp_cksum = cksum((void*)req, ECHO_REQ_SIZE);
     return 0;
 }
 
-int echo__process_response(char *buf, size_t bufsize) {
-    if (bufsize < ECHO_REQ_SIZE) {
+void echo__req_set_seq(char *buf, int seq) {
+    echo_request_t *req = (echo_request_t*) buf;
+    req->hdr.icmp_seq = htons(seq);
+}
+
+int echo__req_set_payload(char *buf) {
+    echo_request_t *req = (echo_request_t*) buf;
+    if (gettimeofday(&req->data, NULL)) {
         return 1;
     }
-    echo_response_t *res = (echo_response_t*) buf;
-    if (verify_chksum(res->icmp.hdr.icmp_cksum, buf, bufsize)) {
-        printf("invalid cksum\n");
-        return 1;
-    }
-    print_icmp_header(&res->icmp.hdr);
-    write(1, buf + sizeof(struct ip), bufsize - sizeof(struct ip));
-    printf("\n");
+    recompute_checksum(req);
     return 0;
+}
+
+struct timeval *echo__res_get_payload(char *buf) {
+    echo_response_t *res = (echo_response_t*) buf;
+    return &res->icmp.data;
+}
+
+u_short echo__res_get_seq(char *buf) {
+    echo_response_t *res = (echo_response_t*) buf;
+    return ntohs(res->icmp.hdr.icmp_seq);
+}
+
+u_short echo__res_get_ttl(char *buf) {
+    echo_response_t *res = (echo_response_t*) buf;
+    return res->ip_hdr.ip_ttl;
 }
